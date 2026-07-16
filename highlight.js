@@ -77,4 +77,5 @@ export function focusMark(i) {
 export const focusNext = () => focusMark(curIndex + 1);
 export const focusPrev = () => focusMark(curIndex - 1);
 export const getMarkCount = () => marks.length;
+export const getCurrentIndex = () => curIndex;
 export const getCurrentMatch = () => matchMeta[curIndex] || null;

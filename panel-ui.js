@@ -45,6 +45,15 @@ export function injectThemeCSS() {
         .ct-check-row {
             display: flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer;
         }
+        .ct-dim { opacity: 0.55; font-weight: 400; }
+        .ct-pos { opacity: 0.55; font-weight: 400; margin-left: 6px; }
+        .ct-action-row {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .ct-btn-primary {
+            background: #2e7d32; color: #ffffff; border-color: #2e7d32;
+        }
+        .ct-btn-primary:active { background: #256428; }
 
         /* /find 하이라이트 표시 */
         #chat .mes_text mark[data-ct] {
@@ -85,7 +94,7 @@ export function makeDraggable(panel, handle) {
     handle.addEventListener('pointercancel', () => { drag = null; handle.style.cursor = 'grab'; });
 }
 
-export function createPanel(id, title) {
+export function createPanel(id, title, onClose) {
     document.getElementById(id)?.remove();
     const panel = document.createElement('div');
     panel.id = id;
@@ -97,7 +106,10 @@ export function createPanel(id, title) {
         </div>
         <div class="ct-panel-body"></div>
     `;
-    panel.querySelector('.ct-close-btn').addEventListener('click', () => panel.remove());
+    panel.querySelector('.ct-close-btn').addEventListener('click', () => {
+        onClose?.();
+        panel.remove();
+    });
     document.body.appendChild(panel);
 
     requestAnimationFrame(() => {
