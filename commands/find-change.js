@@ -1,6 +1,6 @@
 // ─── commands/find-change.js ────────────────────────────────────────────────
 // /find, /change — 검색(하이라이트 + 결과 패널), 찾아바꾸기
-// /change도 /find처럼 "검색 → 화살표로 이동 → (이 매치만 / 모두) 바꾸기" 흐름으로 동작.
+// /change도 /find처럼 "검색 → 화살표로 이동 → 바꾸기/모두 바꾸기" 흐름으로 동작.
 
 import { SlashCommandParser } from '/scripts/slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '/scripts/slash-commands/SlashCommand.js';
@@ -24,7 +24,40 @@ function replaceNthOccurrence(text, find, replace, occurrence) {
     return text.slice(0, idx) + replace + text.slice(idx + find.length);
 }
 
+// 패널의 헤더 ✕ 버튼을 눌렀을 때도 화면의 노란 하이라이트가 같이 지워지도록 연결
+function clearHighlightsOnClose(panel) {
+    panel.querySelector('.ct-close-btn')?.addEventListener('click', () => clearHighlights());
+}
+
 // ── /find ────────────────────────────────────────────────────────────────────
+
+function buildFindResultPanel(keyword, count) {
+    const panel = createPanel('ct-find-panel', `검색 결과: ${count}개`);
+    clearHighlightsOnClose(panel);
+    const body = getPanelBody(panel);
+
+    const input = inputBox('검색어를 입력하세요');
+    input.value = keyword;
+    body.appendChild(input);
+
+    const doSearch = () => {
+        const kw = input.value.trim();
+        if (!kw) return;
+        panel.remove();
+        runFind(kw);
+    };
+    body.appendChild(btn('검색', doSearch));
+    input.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        doSearch();
+    });
+
+    const navRow = document.createElement('div');
+    navRow.appendChild(btn('◀ 이전', () => focusPrev()));
+    navRow.appendChild(btn('다음 ▶', () => focusNext()));
+    body.appendChild(navRow);
+}
 
 function runFind(keyword) {
     const settings = getSettings();
@@ -33,13 +66,7 @@ function runFind(keyword) {
     const count = highlightKeyword(keyword);
     if (!count) { toastr.info('검색 결과가 없습니다.'); return; }
 
-    const panel = createPanel('ct-find-panel', `검색 결과: ${count}개`);
-    const body = getPanelBody(panel);
-    const row = document.createElement('div');
-    row.appendChild(btn('◀ 이전', () => focusPrev()));
-    row.appendChild(btn('다음 ▶', () => focusNext()));
-    row.appendChild(btn('닫기', () => { clearHighlights(); panel.remove(); }));
-    body.appendChild(row);
+    buildFindResultPanel(keyword, count);
 }
 
 function openFindInputPanel() {
@@ -92,22 +119,28 @@ async function runChangeAll(find, replace) {
     else toastr.info('일치하는 내용이 없습니다.');
 }
 
-// 검색된 상태(하이라이트 + 이동 + 바꾸기 버튼)를 보여주는 패널
+// 검색된 상태(찾을 텍스트 + 바꿀 텍스트 + 이동 + 바꾸기 버튼)를 보여주는 패널
 function showChangeResultPanel(find, replaceValue) {
     const panel = createPanel('ct-change-panel', `검색 결과: ${getMarkCount()}개`);
+    clearHighlightsOnClose(panel);
     const body = getPanelBody(panel);
+
+    const findInput = inputBox('찾을 텍스트');
+    findInput.value = find;
+    findInput.disabled = true;
+    body.appendChild(findInput);
+
+    const replaceInput = inputBox('바꿀 텍스트');
+    replaceInput.value = replaceValue;
+    body.appendChild(replaceInput);
 
     const navRow = document.createElement('div');
     navRow.appendChild(btn('◀ 이전', () => focusPrev()));
     navRow.appendChild(btn('다음 ▶', () => focusNext()));
     body.appendChild(navRow);
 
-    const replaceInput = inputBox('바꿀 텍스트');
-    replaceInput.value = replaceValue;
-    body.appendChild(replaceInput);
-
     const actionRow = document.createElement('div');
-    actionRow.appendChild(btn('이 매치만 바꾸기', async () => {
+    actionRow.appendChild(btn('바꾸기', async () => {
         const match = getCurrentMatch();
         if (!match || match.msgIdx === -1) { toastr.error('바꿀 위치를 찾지 못했습니다.'); return; }
         const chat = getChat();
@@ -128,7 +161,6 @@ function showChangeResultPanel(find, replaceValue) {
         panel.remove();
         await runChangeAll(find, replaceInput.value);
     }));
-    actionRow.appendChild(btn('닫기', () => { clearHighlights(); panel.remove(); }));
     body.appendChild(actionRow);
 }
 
@@ -146,15 +178,21 @@ function openChangeInputPanel() {
     const panel = createPanel('ct-change-panel', '찾아바꾸기');
     const body = getPanelBody(panel);
     const findInput = inputBox('찾을 텍스트');
-    const replaceInput = inputBox('바꿀 텍스트 (검색 후에도 수정 가능)');
     body.appendChild(findInput);
-    body.appendChild(replaceInput);
     body.appendChild(btn('검색', () => {
         const find = findInput.value.trim();
         if (!find) return;
         panel.remove();
-        runChangeSearch(find, replaceInput.value);
+        runChangeSearch(find, '');
     }));
+    findInput.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const find = findInput.value.trim();
+        if (!find) return;
+        panel.remove();
+        runChangeSearch(find, '');
+    });
     findInput.focus();
 }
 
