@@ -17,9 +17,10 @@ function escapeHtml(s) {
     }[c]));
 }
 
-// 패널 제목: "검색어" N개 발견  (N개 발견 쪽은 연하게)
+// 패널 제목: "검색어" N개 발견  (N개 발견 쪽은 연하게). 위치 표시(#4 (4/23))는
+// createPanel이 항상 만들어주는 우측 슬롯(#ct-pos)에 따로 채워짐.
 function resultTitleHtml(keyword, count) {
-    return `"${escapeHtml(keyword)}" <span class="ct-dim">${count}개 발견</span> <span id="ct-pos" class="ct-pos"></span>`;
+    return `"${escapeHtml(keyword)}" <span class="ct-dim">${count}개 발견</span>`;
 }
 
 // 제목 옆 위치 표시(#메시지번호 (몇번째/전체))를 지금 상태에 맞게 갱신
@@ -122,7 +123,8 @@ function showChangeResultPanel(find, replaceValue) {
 
     const reviewBtn = btn('하나씩 검토', () => {
         navRow.style.display = '';
-        reviewBtn.remove();
+        reviewBtn.style.visibility = 'hidden';
+        reviewBtn.disabled = true;
     });
     actionRow.appendChild(reviewBtn);
 
