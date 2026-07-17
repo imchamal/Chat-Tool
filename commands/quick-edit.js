@@ -1,9 +1,11 @@
 // ─── commands/quick-edit.js ─────────────────────────────────────────────────
-// 채팅 메시지에서 텍스트를 드래그(길게 눌러 선택)하면 그 아래에 "✏️" 아이콘이 뜨고,
-// 누르면 다른 패널들과 같은 디자인의 입력 패널이 떠서 그 부분만 바꿔줌.
+// 채팅 메시지에서 텍스트를 드래그(길게 눌러 선택)하면 그 아래에 아이콘 2개가 뜸:
+// "✏️" 누르면 다른 패널들과 같은 디자인의 입력 패널이 떠서 그 부분만 바꿔주고,
+// "🔍" 누르면 선택한 단어로 곧바로 /find 검색을 실행함.
 
 import { getChat, editMessage, getSettings } from '../state.js';
 import { createPanel, getPanelBody, inputBox, btn } from '../panel-ui.js';
+import { runFind } from './find-change.js';
 
 let pillEl = null;
 let debounceTimer = null;
@@ -13,15 +15,21 @@ function removePill() {
     pillEl = null;
 }
 
-function showPill(x, y, onClick) {
+// actions: [{ icon, onClick }, ...] — 선택 영역 아래에 아이콘들을 나란히 보여줌
+function showPill(x, y, actions) {
     removePill();
     pillEl = document.createElement('div');
-    pillEl.className = 'ct-pill';
-    pillEl.textContent = '✏️';
+    pillEl.className = 'ct-pill-group';
     pillEl.style.left = `${x}px`;
     pillEl.style.top = `${y}px`;
     pillEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-    pillEl.addEventListener('click', () => { onClick(); removePill(); });
+    actions.forEach(({ icon, onClick }) => {
+        const item = document.createElement('span');
+        item.className = 'ct-pill-item';
+        item.textContent = icon;
+        item.addEventListener('click', () => { onClick(); removePill(); });
+        pillEl.appendChild(item);
+    });
     document.body.appendChild(pillEl);
 }
 
@@ -69,9 +77,10 @@ function handleSelection() {
     const rect = range.getBoundingClientRect();
     if (!rect || (rect.width === 0 && rect.height === 0)) { removePill(); return; }
 
-    showPill(rect.left + rect.width / 2, rect.bottom + 10, () => {
-    openQuickEditPanel(msgIdx, text);
-    });
+    showPill(rect.left + rect.width / 2, rect.bottom + 10, [
+        { icon: '✏️', onClick: () => openQuickEditPanel(msgIdx, text) },
+        { icon: '🔍', onClick: () => runFind(text) },
+    ]);
 }
 
 export function registerQuickEdit() {
