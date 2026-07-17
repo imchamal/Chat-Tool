@@ -55,6 +55,10 @@ export function injectThemeCSS() {
             background: #2e7d32; color: #ffffff; border-color: #2e7d32;
         }
         .ct-btn-primary:active { background: #256428; }
+        .ct-btn-white {
+            background: #ffffff; color: #111111; border-color: #333333;
+        }
+        .ct-btn-white:active { background: #eeeeee; }
         .ct-btn-danger {
             background: #c62828; color: #ffffff; border-color: #c62828;
         }
