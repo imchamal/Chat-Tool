@@ -105,36 +105,64 @@ export function runFind(keyword, options = {}) {
     updatePositionLabel(panel);
 }
 
-function openFindInputPanel() {
-    const panel = createPanel('ct-find-panel', '검색');
+// /find 입력창 + /change 입력창을 하나로 합친 패널.
+// 기본은 "찾기" 모드로 시작하고, 하단의 "+ 바꾸기" 토글을 누르면
+// "바꿀 텍스트" 입력창이 나타나면서 "찾아바꾸기" 모드로 전환됨.
+function openSearchInputPanel() {
+    const panel = createPanel('ct-search-panel', '검색');
     const body = getPanelBody(panel);
     const input = inputBox('찾을 단어를 입력하세요');
     body.appendChild(input);
 
+    const replaceInput = inputBox('바꿀 텍스트');
+    replaceInput.style.display = 'none';
+    body.appendChild(replaceInput);
+
     const { grid, rangeInput, getOptions } = buildSearchControls();
     body.appendChild(grid);
+
+    let changeMode = false;
 
     const bottomRow = document.createElement('div');
     bottomRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
     bottomRow.appendChild(rangeInput);
-    const findBtn = btn('찾기', doFind);
-    findBtn.classList.add('ct-btn-white');
-    findBtn.style.margin = '0';
-    bottomRow.appendChild(findBtn);
+
+    const rightGroup = document.createElement('div');
+    rightGroup.style.cssText = 'display:flex; gap:6px; align-items:center;';
+
+    const actionBtn = btn('찾기', doSubmit);
+    actionBtn.classList.add('ct-btn-white');
+    actionBtn.style.margin = '0';
+
+    const toggleBtn = btn('+ 바꾸기', () => {
+        changeMode = !changeMode;
+        replaceInput.style.display = changeMode ? '' : 'none';
+        toggleBtn.textContent = changeMode ? '− 바꾸기 취소' : '+ 바꾸기';
+        actionBtn.textContent = changeMode ? '검색' : '찾기';
+    });
+    toggleBtn.style.margin = '0';
+
+    rightGroup.appendChild(toggleBtn);
+    rightGroup.appendChild(actionBtn);
+    bottomRow.appendChild(rightGroup);
     body.appendChild(bottomRow);
 
-    function doFind() {
+    function doSubmit() {
         const kw = input.value.trim();
         if (!kw) return;
         const options = getOptions();
         if (!applyRangeToOptions(options, rangeInput)) return;
         panel.remove();
-        runFind(kw, options);
+        if (changeMode) {
+            runChangeSearch(kw, replaceInput.value, options);
+        } else {
+            runFind(kw, options);
+        }
     }
     input.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter') return;
         e.preventDefault();
-        doFind();
+        doSubmit();
     });
     input.focus();
 }
@@ -277,71 +305,28 @@ function runChangeSearch(find, replaceValue, options = {}, startReviewing = fals
     showChangeResultPanel(find, replaceValue, options, startReviewing);
 }
 
-function openChangeInputPanel() {
-    const panel = createPanel('ct-change-panel', '찾아바꾸기');
-    const body = getPanelBody(panel);
-    const findInput = inputBox('찾을 텍스트');
-    body.appendChild(findInput);
-
-    const { grid, rangeInput, getOptions } = buildSearchControls();
-    body.appendChild(grid);
-
-    const bottomRow = document.createElement('div');
-    bottomRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
-    bottomRow.appendChild(rangeInput);
-    const searchBtn = btn('검색', doSearch);
-    searchBtn.classList.add('ct-btn-white');
-    searchBtn.style.margin = '0';
-    bottomRow.appendChild(searchBtn);
-    body.appendChild(bottomRow);
-
-    function doSearch() {
-        const find = findInput.value.trim();
-        if (!find) return;
-        const options = getOptions();
-        if (!applyRangeToOptions(options, rangeInput)) return;
-        panel.remove();
-        runChangeSearch(find, '', options);
-    }
-    findInput.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter') return;
-        e.preventDefault();
-        doSearch();
-    });
-    findInput.focus();
-}
-
 // ── 명령어 등록 ────────────────────────────────────────────────────────────────
+// /find, /change를 /search 하나로 통합.
+// 슬래시(/)가 없는 인자는 찾기, 슬래시가 있으면 "원본/바꿀텍스트"로 보고 찾아바꾸기.
 
 export function registerFindChangeCommands() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
-        name: 'find',
-        helpString: '채팅에서 검색합니다. 사용법: /find 키워드, 또는 키워드 없이 /find 만 입력하면 옵션과 범위를 고를 수 있는 입력 패널이 뜹니다.',
+        name: 'search',
+        helpString: '채팅에서 검색하거나 찾아 바꿉니다. 사용법: /search 키워드 (찾기), /search 원본텍스트/바꿀텍스트 (찾아바꾸기). 인자 없이 /search 만 입력하면 입력 패널이 뜹니다.',
         unnamedArgumentList: [
-            SlashCommandArgument.fromProps({ description: '검색어 (생략시 입력 패널)', typeList: [ARGUMENT_TYPE.STRING], isRequired: false }),
-        ],
-        callback: async (_a, value) => {
-            const keyword = String(value ?? '').trim();
-            if (!keyword) { openFindInputPanel(); return ''; }
-            runFind(keyword);
-            return '';
-        },
-    }));
-
-    SlashCommandParser.addCommandObject(SlashCommand.fromProps({
-        name: 'change',
-        helpString: '채팅에서 찾아 바꿉니다. 검색 후 검토/바꾸기를 선택합니다. 사용법: /change 원본텍스트/바꿀텍스트, 또는 인자 없이 /change 만 입력하면 옵션과 범위를 고를 수 있는 입력 패널이 뜹니다.',
-        unnamedArgumentList: [
-            SlashCommandArgument.fromProps({ description: '원본/바꿀텍스트 (생략시 입력 패널)', typeList: [ARGUMENT_TYPE.STRING], isRequired: false }),
+            SlashCommandArgument.fromProps({ description: '키워드, 또는 원본/바꿀텍스트 (생략시 입력 패널)', typeList: [ARGUMENT_TYPE.STRING], isRequired: false }),
         ],
         callback: async (_a, value) => {
             const raw = String(value ?? '');
-            if (!raw.trim()) { openChangeInputPanel(); return ''; }
+            if (!raw.trim()) { openSearchInputPanel(); return ''; }
             const slashIdx = raw.indexOf('/');
-            if (slashIdx === -1) { toastr.error('사용법: /change 원본텍스트/바꿀텍스트'); return ''; }
-            const find = raw.slice(0, slashIdx);
-            const replace = raw.slice(slashIdx + 1);
-            runChangeSearch(find, replace);
+            if (slashIdx === -1) {
+                runFind(raw.trim());
+            } else {
+                const find = raw.slice(0, slashIdx);
+                const replace = raw.slice(slashIdx + 1);
+                runChangeSearch(find, replace);
+            }
             return '';
         },
     }));
