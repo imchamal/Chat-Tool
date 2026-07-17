@@ -2,6 +2,13 @@
 // /find, /change 결과를 채팅 화면(DOM) 위에 <mark>로 표시.
 // 각 mark가 몇 번 메시지(msgIdx)에 속하고, 그 메시지 안에서 몇 번째 일치인지도
 // 같이 기억해둠 — /change에서 "지금 보고 있는 이 매치만 실제로 바꾸기"에 사용.
+//
+// 검색옵션(대소문자 구분/띄어쓰기 무시/온전한 단어/태그 무시)은 Slashie의 정규식
+// 엔진을 이식해서 지원함 (utils.js의 buildSearchRegex/maskTags).
+// 참고: 지금 화면에 렌더링된 메시지 안에서만 검색됨 (아직 로드 안 된 위쪽 메시지는
+// 제외 — 기존과 동일한 단순화 버전 한계).
+
+import { buildSearchRegex, maskTags } from './utils.js';
 
 let marks = [];       // 화면에 표시된 <mark> 엘리먼트들 (등장 순서대로)
 let matchMeta = [];   // marks와 같은 순서. { msgIdx, occurrence } (occurrence: 그 메시지 안에서 몇 번째 일치인지, 0부터)
@@ -20,11 +27,10 @@ export function clearHighlights() {
     curIndex = -1;
 }
 
-// 대소문자 무시 단순 일치만 지원 (테스트 버전 — 정규식/옵션 등은 나중에 추가)
-export function highlightKeyword(keyword) {
+// options: { caseSensitive, ignoreSpace, wholeWord, ignoreTags }
+export function highlightKeyword(keyword, options = {}) {
     clearHighlights();
     if (!keyword) return 0;
-    const lower = keyword.toLowerCase();
 
     document.querySelectorAll('#chat .mes_text').forEach((mesText) => {
         const mesEl = mesText.closest('.mes[mesid]');
@@ -38,24 +44,30 @@ export function highlightKeyword(keyword) {
 
         textNodes.forEach((tn) => {
             const text = tn.textContent;
-            const lowerText = text.toLowerCase();
-            let idx = lowerText.indexOf(lower);
-            if (idx === -1) return;
+            const searchText = options.ignoreTags ? maskTags(text) : text;
+            const re = buildSearchRegex(keyword, options);
+
+            const found = [];
+            let m;
+            while ((m = re.exec(searchText)) !== null) {
+                if (m.index === re.lastIndex) { re.lastIndex++; continue; } // 빈 매치(예: 옵션 조합으로 생긴) 무한루프 방지
+                found.push({ start: m.index, end: m.index + m[0].length });
+            }
+            if (!found.length) return;
 
             const frag = document.createDocumentFragment();
             let cursor = 0;
-            while (idx !== -1) {
-                frag.appendChild(document.createTextNode(text.slice(cursor, idx)));
+            found.forEach(({ start, end }) => {
+                frag.appendChild(document.createTextNode(text.slice(cursor, start)));
                 const mark = document.createElement('mark');
                 mark.setAttribute('data-ct', '1');
-                mark.textContent = text.slice(idx, idx + keyword.length);
+                mark.textContent = text.slice(start, end);
                 frag.appendChild(mark);
                 marks.push(mark);
                 matchMeta.push({ msgIdx, occurrence });
                 occurrence++;
-                cursor = idx + keyword.length;
-                idx = lowerText.indexOf(lower, cursor);
-            }
+                cursor = end;
+            });
             frag.appendChild(document.createTextNode(text.slice(cursor)));
             tn.parentNode.replaceChild(frag, tn);
         });

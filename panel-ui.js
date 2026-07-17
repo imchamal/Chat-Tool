@@ -55,6 +55,14 @@ export function injectThemeCSS() {
             background: #2e7d32; color: #ffffff; border-color: #2e7d32;
         }
         .ct-btn-primary:active { background: #256428; }
+        .ct-btn-danger {
+            background: #c62828; color: #ffffff; border-color: #c62828;
+        }
+        .ct-btn-danger:active { background: #a02121; }
+        .ct-badge {
+            flex-shrink: 0; font-size: 10px; color: #999999; border: 1px solid #dddddd;
+            border-radius: 4px; padding: 1px 5px; margin-left: 6px;
+        }
 
         /* /find 하이라이트 표시 */
         #chat .mes_text mark[data-ct] {
