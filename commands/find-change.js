@@ -175,20 +175,23 @@ function showChangeResultPanel(find, replaceValue, options) {
     const body = getPanelBody(panel);
     updatePositionLabel(panel);
 
-    // 검색하자마자 이전/다음이 바로 보여서, 채팅 화면을 눈으로 뒤질 필요 없이
-    // 패널 안에서 바로 원하는 매치로 이동할 수 있음.
-    const navRow = document.createElement('div');
-    navRow.style.cssText = 'display:flex; gap:6px; margin-bottom:10px;';
-    navRow.appendChild(btn('◂ 이전', () => { focusPrev(); updatePositionLabel(panel); }));
-    navRow.appendChild(btn('다음 ▸', () => { focusNext(); updatePositionLabel(panel); }));
-    body.appendChild(navRow);
-
     const replaceInput = inputBox('바꿀 텍스트');
     replaceInput.value = replaceValue;
     body.appendChild(replaceInput);
 
+    // 입력창 아래 한 줄에: 왼쪽은 이전/다음(이동), 오른쪽은 바꾸기/모두바꾸기(실행).
+    // 실행 버튼 두 개는 실수로 누르는 걸 막기 위해 강조색(ct-btn-accent)을 씀.
     const actionRow = document.createElement('div');
     actionRow.className = 'ct-action-row';
+
+    const leftGroup = document.createElement('div');
+    leftGroup.style.cssText = 'display:flex; gap:6px;';
+    leftGroup.appendChild(btn('◂ 이전', () => { focusPrev(); updatePositionLabel(panel); }));
+    leftGroup.appendChild(btn('다음 ▸', () => { focusNext(); updatePositionLabel(panel); }));
+    actionRow.appendChild(leftGroup);
+
+    const rightGroup = document.createElement('div');
+    rightGroup.style.cssText = 'display:flex; gap:6px;';
 
     const oneBtn = btn('바꾸기', async () => {
         // 지금 이전/다음으로 보고 있는 매치 하나만 바꾸고, 검색을 새로고침해서 계속 이동/교체 가능하게 함
@@ -196,15 +199,17 @@ function showChangeResultPanel(find, replaceValue, options) {
         panel.remove();
         runChangeSearch(find, replaceInput.value, options);
     });
-    actionRow.appendChild(oneBtn);
+    oneBtn.classList.add('ct-btn-accent');
+    rightGroup.appendChild(oneBtn);
 
     const allBtn = btn('모두 바꾸기', async () => {
         clearHighlights();
         panel.remove();
         await runChangeAll(find, replaceInput.value, options);
     });
-    allBtn.classList.add('ct-btn-white');
-    actionRow.appendChild(allBtn);
+    allBtn.classList.add('ct-btn-accent');
+    rightGroup.appendChild(allBtn);
+    actionRow.appendChild(rightGroup);
 
     body.appendChild(actionRow);
 }
