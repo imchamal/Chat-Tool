@@ -35,6 +35,7 @@ export function highlightKeyword(keyword, options = {}) {
     document.querySelectorAll('#chat .mes_text').forEach((mesText) => {
         const mesEl = mesText.closest('.mes[mesid]');
         const msgIdx = mesEl ? parseInt(mesEl.getAttribute('mesid'), 10) : -1;
+        if (options.allowedIdxs && !options.allowedIdxs.has(msgIdx)) return; // 검색범위 지정 시 범위 밖 메시지는 건너뜀
         let occurrence = 0;
 
         const walker = document.createTreeWalker(mesText, NodeFilter.SHOW_TEXT);

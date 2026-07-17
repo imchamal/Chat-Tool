@@ -70,6 +70,25 @@ export function maskTags(text) {
     return text.replace(/<[^>]*>/g, (m) => '\u0000'.repeat(m.length));
 }
 
+// 검색 범위 입력 파싱 — "5", "2-8", "1,3,5-9"처럼 콤마로 섞어 쓸 수 있음.
+// 비어있으면 null(제한없음), 형식이 잘못되면 문자열 'invalid'를 반환.
+export function parseRangeInput(raw) {
+    const str = String(raw ?? '').trim();
+    if (!str) return null;
+    const parts = str.split(',').map((p) => p.trim());
+    const result = [];
+    for (const p of parts) {
+        if (/^\d+$/.test(p)) { result.push(parseInt(p, 10)); continue; }
+        const m = p.match(/^(\d+)-(\d+)$/);
+        if (!m) return 'invalid';
+        const s = parseInt(m[1], 10);
+        const e = parseInt(m[2], 10);
+        if (s > e) return 'invalid';
+        for (let i = s; i <= e; i++) result.push(i);
+    }
+    return result;
+}
+
 // 검색어 + 옵션(caseSensitive, ignoreSpace, wholeWord)으로 정규식을 만듦.
 // ignoreTags는 정규식이 아니라 "검색 대상 텍스트를 마스킹"하는 방식이라 여기 포함 안 됨 (maskTags 별도 사용)
 export function buildSearchRegex(keyword, options = {}) {
