@@ -18,12 +18,12 @@ export function registerEditModeCommand() {
             const body = getPanelBody(panel);
 
             body.appendChild(checkRow(
-                '/find 검색 하이라이트 사용',
+                '하이라이트 사용',
                 () => settings.hlEnabled,
                 (v) => { settings.hlEnabled = v; saveSettings(); },
             ));
             body.appendChild(checkRow(
-                '드래그 후 빠른수정 아이콘 사용',
+                '퀵 메뉴 사용',
                 () => settings.quickEditEnabled,
                 (v) => { settings.quickEditEnabled = v; saveSettings(); },
             ));
