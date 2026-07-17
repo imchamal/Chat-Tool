@@ -11,15 +11,17 @@ import { registerQuickEdit } from './quick-edit.js';
 import { registerClipboardCommand } from './clipboard.js';
 import { registerWordCountCommand } from './wordcount.js';
 import { registerEditModeCommand } from './edit-mode.js';
+import { registerMessageManageCommand } from './message-manage.js';
 
 const registrars = [
-    registerScrollCommands,     // /up /down /goto
-    registerCollapseCommands,   // /collapse /expand
-    registerFindChangeCommands, // /find /change
-    registerQuickEdit,          // 드래그 후 빠른수정 아이콘
-    registerClipboardCommand,   // /clip
-    registerWordCountCommand,   // /word
-    registerEditModeCommand,    // /edit-mode
+    registerScrollCommands,        // /up /down /goto /message-mb
+    registerCollapseCommands,      // /collapse /expand
+    registerFindChangeCommands,    // /find /change (옵션: 대소문자/띄어쓰기/온전한단어/태그무시)
+    registerQuickEdit,             // 드래그 후 빠른수정 아이콘
+    registerClipboardCommand,      // /clip
+    registerWordCountCommand,      // /word
+    registerEditModeCommand,       // /edit-mode
+    registerMessageManageCommand,  // /messages (전체 메시지 숨김/삭제 관리)
 ];
 
 export function registerAllCommands() {

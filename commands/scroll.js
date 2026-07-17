@@ -26,6 +26,20 @@ export function registerScrollCommands() {
     }));
 
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+        name: 'message-mb',
+        helpString: 'STMemoryBooks 확장의 메모리 경계선(마지막 요약 지점)으로 스크롤합니다.',
+        callback: async () => {
+            const marker = document.querySelector('div.stmb_memory_boundary_divider');
+            if (!marker) {
+                toastr.info('메모리 경계선을 찾지 못했습니다. (STMemoryBooks 확장 설치 여부와 경계선 존재 여부를 확인해주세요)', '', { timeOut: 5000 });
+                return '';
+            }
+            marker.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            return '';
+        },
+    }));
+
+    SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'goto',
         helpString: '메시지 번호로 스크롤합니다. 사용법: /goto 5',
         unnamedArgumentList: [
