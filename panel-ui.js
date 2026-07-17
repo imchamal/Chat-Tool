@@ -72,13 +72,19 @@ export function injectThemeCSS() {
             background: rgba(0,0,0,0.75) !important; color: #ffffff !important; font-weight: bold;
         }
 
-        /* 드래그 선택 후 뜨는 빠른수정 아이콘 */
-        .ct-pill {
+        /* 드래그 선택 후 뜨는 빠른수정/검색 아이콘 묶음 */
+        .ct-pill-group {
             position: fixed; z-index: 999999; transform: translate(-50%, 0%);
+            display: flex; align-items: center; gap: 2px;
             background: #ffffff; border: 1px solid #dddddd; border-radius: 20px;
-            padding: 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            font-size: 14px; cursor: pointer; white-space: nowrap; user-select: none;
+            padding: 4px 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            white-space: nowrap; user-select: none;
         }
+        .ct-pill-item {
+            font-size: 16px; line-height: 1; cursor: pointer;
+            padding: 6px 8px; border-radius: 14px;
+        }
+        .ct-pill-item:active { background: #eeeeee; }
     `;
 document.head.appendChild(s);
     watchDrawers();
