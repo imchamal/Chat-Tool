@@ -51,12 +51,8 @@ export function injectThemeCSS() {
         .ct-action-row {
             display: flex; justify-content: space-between; align-items: center;
         }
-        .ct-btn-primary {
-            background: #2e7d32; color: #ffffff; border-color: #2e7d32;
-        }
-        .ct-btn-primary:active { background: #256428; }
         .ct-btn-white {
-            background: #ffffff; color: #2e7d32; border-color: #2e7d32;
+            background: #ffffff; color: #dddddd; border-color: #dddddd;
         }
         .ct-btn-white:active { background: #eeeeee; }
         .ct-btn-danger {
