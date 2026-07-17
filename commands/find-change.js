@@ -207,7 +207,7 @@ function showChangeResultPanel(find, replaceValue, options) {
         panel.remove();
         await runChangeAll(find, replaceInput.value, options);
     });
-    allBtn.classList.add('ct-btn-accent');
+    allBtn.classList.add('ct-btn-danger');
     rightGroup.appendChild(allBtn);
     actionRow.appendChild(rightGroup);
 
