@@ -187,29 +187,28 @@ function showChangeResultPanel(find, replaceValue, options) {
     replaceInput.value = replaceValue;
     body.appendChild(replaceInput);
 
-    // 이전/다음 화살표는 "하나씩 검토"를 누르기 전까지 숨겨둠
-    // (grid-template-rows 0fr→1fr 트릭: 평소엔 공간을 아예 차지하지 않다가,
-    //  열릴 때는 부드럽게 늘어나면서 아래 버튼을 밀어냄 — 갑자기 튀는 느낌 없음)
-    const navWrap = document.createElement('div');
-    navWrap.style.cssText = 'display:grid; grid-template-rows:0fr; transition:grid-template-rows 0.25s ease;';
-    const navInner = document.createElement('div');
-    navInner.style.overflow = 'hidden';
-    const navRow = document.createElement('div');
-    navRow.appendChild(btn('◂ 이전', () => { focusPrev(); updatePositionLabel(panel); }));
-    navRow.appendChild(btn('다음 ▸', () => { focusNext(); updatePositionLabel(panel); }));
-    navInner.appendChild(navRow);
-    navWrap.appendChild(navInner);
-    body.appendChild(navWrap);
-
+// '하나씩 검토'와 '모두 바꾸기'는 항상 한 줄(actionRow)에 있음.
+    // '하나씩 검토'를 누르면 새 줄이 생기는 게 아니라, 같은 자리(leftGroup)의
+    // 내용물이 '◂ 이전 / 다음 ▸'으로 바뀔 뿐이라 '모두 바꾸기' 위치는 그대로 유지됨.
     const actionRow = document.createElement('div');
     actionRow.className = 'ct-action-row';
 
+    const leftGroup = document.createElement('div');
+    leftGroup.style.cssText = 'display:flex; gap:6px; align-items:center;';
+
     const reviewBtn = btn('하나씩 검토', () => {
-        navWrap.style.gridTemplateRows = '1fr';
-        reviewBtn.style.visibility = 'hidden';
-        reviewBtn.disabled = true;
+        reviewBtn.style.display = 'none';
+        navGroup.style.display = 'flex';
     });
-    actionRow.appendChild(reviewBtn);
+    leftGroup.appendChild(reviewBtn);
+
+    const navGroup = document.createElement('div');
+    navGroup.style.cssText = 'display:none; gap:6px;';
+    navGroup.appendChild(btn('◂ 이전', () => { focusPrev(); updatePositionLabel(panel); }));
+    navGroup.appendChild(btn('다음 ▸', () => { focusNext(); updatePositionLabel(panel); }));
+    leftGroup.appendChild(navGroup);
+
+    actionRow.appendChild(leftGroup);
 
     const allBtn = btn('모두 바꾸기', async () => {
         clearHighlights();
