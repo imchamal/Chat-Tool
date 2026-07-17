@@ -114,6 +114,7 @@ function openFindInputPanel() {
     bottomRow.appendChild(rangeInput);
     const findBtn = btn('찾기', doFind);
     findBtn.classList.add('ct-btn-white');
+    bottomRow.appendChild(findBtn);
     body.appendChild(bottomRow);
 
     function doFind() {
