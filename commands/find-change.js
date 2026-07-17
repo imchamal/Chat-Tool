@@ -108,7 +108,7 @@ export function runFind(keyword, options = {}) {
 
     // 이미 하이라이트되어 있는 지금 검색 결과를 그대로 들고 "찾아바꾸기" 패널로 전환.
     // (다시 검색하지 않고 showChangeResultPanel만 새로 띄움)
-    const changeBtn = btn('✏️', () => {
+    const changeBtn = btn('🪄', () => {
         panel.remove();
         showChangeResultPanel(keyword, '', options);
     });
