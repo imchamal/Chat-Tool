@@ -1,14 +1,14 @@
 // ─── commands/find-change.js ────────────────────────────────────────────────
 // /find, /change — 검색(하이라이트 + 결과 패널), 찾아바꾸기
-// 검색옵션(대소문자 구분/띄어쓰기 무시/온전한 단어/태그 무시)은 '옵션' 버튼을
-// 눌러야 펼쳐짐 — Slashie의 정규식 엔진을 이식해서 지원.
+// 검색옵션(대소문자 구분/띄어쓰기 무시/온전한 단어/태그 무시) 4개는 항상 2열로
+// 노출되고, 검색 범위(예: 5 / 2-8 / 1,3,5-9)도 지정할 수 있음.
 
 import { SlashCommandParser } from '/scripts/slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '/scripts/slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument } from '/scripts/slash-commands/SlashCommandArgument.js';
 import { getChat, editMessage, getSettings } from '../state.js';
 import { createPanel, getPanelBody, btn, inputBox, checkRow } from '../panel-ui.js';
-import { buildSearchRegex, maskTags } from '../utils.js';
+import { buildSearchRegex, maskTags, parseRangeInput } from '../utils.js';
 import {
     highlightKeyword, focusNext, focusPrev, clearHighlights,
     getMarkCount, getCurrentIndex, getCurrentMatch,
@@ -47,26 +47,39 @@ function updatePositionLabel(panel) {
     el.textContent = `#${match.msgIdx} (${getCurrentIndex() + 1}/${total})`;
 }
 
-// 입력 패널에서 공용으로 쓰는 "옵션" 접이식 토글 — 기본은 접힌 상태.
-// 반환된 getOptions()로 지금 체크 상태를 읽어옴.
-function buildOptionsToggle() {
+// 입력 패널 공용 부품: 옵션 체크박스 4개(2열 그리드) + 검색범위 입력창.
+// getOptions()로 지금 체크 상태를, rangeInput.value로 범위 텍스트를 읽어옴.
+function buildSearchControls() {
     const state = { caseSensitive: false, ignoreSpace: false, wholeWord: false, ignoreTags: false };
-    const wrap = document.createElement('div');
 
-    const checklist = document.createElement('div');
-    checklist.style.cssText = 'display:none; margin-top:2px; margin-bottom:8px;';
-    checklist.appendChild(checkRow('대소문자 구분', () => state.caseSensitive, (v) => { state.caseSensitive = v; }));
-    checklist.appendChild(checkRow('띄어쓰기 무시', () => state.ignoreSpace, (v) => { state.ignoreSpace = v; }));
-    checklist.appendChild(checkRow('온전한 단어', () => state.wholeWord, (v) => { state.wholeWord = v; }));
-    checklist.appendChild(checkRow('태그 무시', () => state.ignoreTags, (v) => { state.ignoreTags = v; }));
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid; grid-template-columns: 1fr 1fr; gap:2px 12px; margin-bottom:10px;';
+    grid.appendChild(checkRow('대소문자 구분', () => state.caseSensitive, (v) => { state.caseSensitive = v; }));
+    grid.appendChild(checkRow('띄어쓰기 무시', () => state.ignoreSpace, (v) => { state.ignoreSpace = v; }));
+    grid.appendChild(checkRow('온전한 단어', () => state.wholeWord, (v) => { state.wholeWord = v; }));
+    grid.appendChild(checkRow('태그 무시', () => state.ignoreTags, (v) => { state.ignoreTags = v; }));
 
-    const toggleBtn = btn('옵션', () => {
-        checklist.style.display = checklist.style.display === 'none' ? '' : 'none';
-    });
-    wrap.appendChild(toggleBtn);
-    wrap.appendChild(checklist);
+    const rangeInput = document.createElement('input');
+    rangeInput.type = 'text';
+    rangeInput.placeholder = '검색 범위';
+    rangeInput.autocomplete = 'off';
+    rangeInput.autocorrect = 'off';
+    rangeInput.autocapitalize = 'off';
+    rangeInput.spellcheck = false;
+    rangeInput.style.cssText = 'width:110px; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid #dddddd; font-size:13px; font-family:inherit;';
 
-    return { wrap, getOptions: () => ({ ...state }) };
+    return { grid, rangeInput, getOptions: () => ({ ...state }) };
+}
+
+// 검색범위 입력값을 옵션에 반영. 형식이 잘못됐으면 false를 반환(그때는 진행하면 안 됨)
+function applyRangeToOptions(options, rangeInput) {
+    const range = parseRangeInput(rangeInput.value);
+    if (range === 'invalid') {
+        toastr.error('검색 범위를 올바르게 입력해주세요. 예: 5 / 2-8 / 1,3,5-9', '', { timeOut: 4000 });
+        return false;
+    }
+    if (range) options.allowedIdxs = new Set(range);
+    return true;
 }
 
 // ── /find ────────────────────────────────────────────────────────────────────
@@ -91,19 +104,28 @@ function runFind(keyword, options = {}) {
 function openFindInputPanel() {
     const panel = createPanel('ct-find-panel', '검색');
     const body = getPanelBody(panel);
-    const input = inputBox('검색어를 입력하세요');
+    const input = inputBox('찾을 단어를 입력하세요');
     body.appendChild(input);
-    const { wrap: optWrap, getOptions } = buildOptionsToggle();
-    body.appendChild(optWrap);
 
-    const doFind = () => {
+    const { grid, rangeInput, getOptions } = buildSearchControls();
+    body.appendChild(grid);
+
+    const bottomRow = document.createElement('div');
+    bottomRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
+    bottomRow.appendChild(rangeInput);
+    const findBtn = btn('찾기', doFind);
+    findBtn.classList.add('ct-btn-primary');
+    bottomRow.appendChild(findBtn);
+    body.appendChild(bottomRow);
+
+    function doFind() {
         const kw = input.value.trim();
         if (!kw) return;
         const options = getOptions();
+        if (!applyRangeToOptions(options, rangeInput)) return;
         panel.remove();
         runFind(kw, options);
-    };
-    body.appendChild(btn('검색', doFind));
+    }
     input.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter') return;
         e.preventDefault();
@@ -114,13 +136,14 @@ function openFindInputPanel() {
 
 // ── /change ──────────────────────────────────────────────────────────────────
 
-// 메시지 전체(채팅 전체)에서 find를 replace로 전부 바꿈. 옵션(대소문자/띄어쓰기/
-// 온전한단어/태그무시)에 맞는 정규식으로 원본 텍스트(msg.mes)를 직접 치환.
+// 메시지 전체(채팅 전체, 또는 지정한 범위)에서 find를 replace로 전부 바꿈.
+// 옵션(대소문자/띄어쓰기/온전한단어/태그무시)에 맞는 정규식으로 원본 텍스트(msg.mes)를 직접 치환.
 async function runChangeAll(find, replace, options = {}) {
     if (!find) { toastr.error('원본텍스트가 비어있습니다.'); return; }
     const chat = getChat();
     let changedCount = 0;
     for (let idx = 0; idx < chat.length; idx++) {
+        if (options.allowedIdxs && !options.allowedIdxs.has(idx)) continue;
         const msg = chat[idx];
         if (!msg) continue;
         const raw = msg.mes;
@@ -202,17 +225,26 @@ function openChangeInputPanel() {
     const body = getPanelBody(panel);
     const findInput = inputBox('찾을 텍스트');
     body.appendChild(findInput);
-    const { wrap: optWrap, getOptions } = buildOptionsToggle();
-    body.appendChild(optWrap);
 
-    const doSearch = () => {
+    const { grid, rangeInput, getOptions } = buildSearchControls();
+    body.appendChild(grid);
+
+    const bottomRow = document.createElement('div');
+    bottomRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
+    bottomRow.appendChild(rangeInput);
+    const searchBtn = btn('검색', doSearch);
+    searchBtn.classList.add('ct-btn-primary');
+    bottomRow.appendChild(searchBtn);
+    body.appendChild(bottomRow);
+
+    function doSearch() {
         const find = findInput.value.trim();
         if (!find) return;
         const options = getOptions();
+        if (!applyRangeToOptions(options, rangeInput)) return;
         panel.remove();
         runChangeSearch(find, '', options);
-    };
-    body.appendChild(btn('검색', doSearch));
+    }
     findInput.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter') return;
         e.preventDefault();
@@ -226,7 +258,7 @@ function openChangeInputPanel() {
 export function registerFindChangeCommands() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'find',
-        helpString: '채팅에서 검색합니다. 사용법: /find 키워드, 또는 키워드 없이 /find 만 입력하면 옵션을 고를 수 있는 입력 패널이 뜹니다.',
+        helpString: '채팅에서 검색합니다. 사용법: /find 키워드, 또는 키워드 없이 /find 만 입력하면 옵션과 범위를 고를 수 있는 입력 패널이 뜹니다.',
         unnamedArgumentList: [
             SlashCommandArgument.fromProps({ description: '검색어 (생략시 입력 패널)', typeList: [ARGUMENT_TYPE.STRING], isRequired: false }),
         ],
@@ -240,7 +272,7 @@ export function registerFindChangeCommands() {
 
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'change',
-        helpString: '채팅에서 찾아 바꿉니다. 검색 후 검토/바꾸기를 선택합니다. 사용법: /change 원본텍스트/바꿀텍스트, 또는 인자 없이 /change 만 입력하면 옵션을 고를 수 있는 입력 패널이 뜹니다.',
+        helpString: '채팅에서 찾아 바꿉니다. 검색 후 검토/바꾸기를 선택합니다. 사용법: /change 원본텍스트/바꿀텍스트, 또는 인자 없이 /change 만 입력하면 옵션과 범위를 고를 수 있는 입력 패널이 뜹니다.',
         unnamedArgumentList: [
             SlashCommandArgument.fromProps({ description: '원본/바꿀텍스트 (생략시 입력 패널)', typeList: [ARGUMENT_TYPE.STRING], isRequired: false }),
         ],
