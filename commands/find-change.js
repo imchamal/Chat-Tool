@@ -100,69 +100,50 @@ export function runFind(keyword, options = {}) {
     const row = document.createElement('div');
     row.appendChild(btn('◀ 이전', () => { focusPrev(); updatePositionLabel(panel); }));
     row.appendChild(btn('다음 ▶︎', () => { focusNext(); updatePositionLabel(panel); }));
+    // 이미 하이라이트되어 있는 지금 검색 결과를 그대로 들고 "찾아바꾸기" 패널로 전환.
+    // (다시 검색하지 않고 showChangeResultPanel만 새로 띄움)
+    row.appendChild(btn('바꾸기', () => {
+        panel.remove();
+        showChangeResultPanel(keyword, '', options);
+    }));
     body.appendChild(row);
 
     updatePositionLabel(panel);
 }
 
-// /find 입력창 + /change 입력창을 하나로 합친 패널.
-// 기본은 "찾기" 모드로 시작하고, 하단의 "+ 바꾸기" 토글을 누르면
-// "바꿀 텍스트" 입력창이 나타나면서 "찾아바꾸기" 모드로 전환됨.
+// /find, /change 입력창을 대체하는 검색 입력 패널.
+// 항상 "찾기"만 실행하고, 찾아바꾸기로 전환하는 "바꾸기" 버튼은
+// 검색 후에 뜨는 결과 패널(runFind) 쪽에 있음.
 function openSearchInputPanel() {
     const panel = createPanel('ct-search-panel', '검색');
     const body = getPanelBody(panel);
     const input = inputBox('찾을 단어를 입력하세요');
     body.appendChild(input);
 
-    const replaceInput = inputBox('바꿀 텍스트');
-    replaceInput.style.display = 'none';
-    body.appendChild(replaceInput);
-
     const { grid, rangeInput, getOptions } = buildSearchControls();
     body.appendChild(grid);
-
-    let changeMode = false;
 
     const bottomRow = document.createElement('div');
     bottomRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
     bottomRow.appendChild(rangeInput);
-
-    const rightGroup = document.createElement('div');
-    rightGroup.style.cssText = 'display:flex; gap:6px; align-items:center;';
-
-    const actionBtn = btn('찾기', doSubmit);
-    actionBtn.classList.add('ct-btn-white');
-    actionBtn.style.margin = '0';
-
-    const toggleBtn = btn('+ 바꾸기', () => {
-        changeMode = !changeMode;
-        replaceInput.style.display = changeMode ? '' : 'none';
-        toggleBtn.textContent = changeMode ? '− 바꾸기 취소' : '+ 바꾸기';
-        actionBtn.textContent = changeMode ? '검색' : '찾기';
-    });
-    toggleBtn.style.margin = '0';
-
-    rightGroup.appendChild(toggleBtn);
-    rightGroup.appendChild(actionBtn);
-    bottomRow.appendChild(rightGroup);
+    const findBtn = btn('찾기', doFind);
+    findBtn.classList.add('ct-btn-white');
+    findBtn.style.margin = '0';
+    bottomRow.appendChild(findBtn);
     body.appendChild(bottomRow);
 
-    function doSubmit() {
+    function doFind() {
         const kw = input.value.trim();
         if (!kw) return;
         const options = getOptions();
         if (!applyRangeToOptions(options, rangeInput)) return;
         panel.remove();
-        if (changeMode) {
-            runChangeSearch(kw, replaceInput.value, options);
-        } else {
-            runFind(kw, options);
-        }
+        runFind(kw, options);
     }
     input.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter') return;
         e.preventDefault();
-        doSubmit();
+        doFind();
     });
     input.focus();
 }
