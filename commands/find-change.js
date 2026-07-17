@@ -113,7 +113,7 @@ function openFindInputPanel() {
     bottomRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
     bottomRow.appendChild(rangeInput);
     const findBtn = btn('찾기', doFind);
-    bottomRow.appendChild(findBtn);
+    findBtn.classList.add('ct-btn-white');
     body.appendChild(bottomRow);
 
     function doFind() {
@@ -202,7 +202,7 @@ function showChangeResultPanel(find, replaceValue, options) {
         panel.remove();
         await runChangeAll(find, replaceInput.value, options);
     });
-    allBtn.classList.add('ct-btn-primary');
+    allBtn.classList.add('ct-btn-white');
     actionRow.appendChild(allBtn);
 
     body.appendChild(actionRow);
@@ -231,6 +231,7 @@ function openChangeInputPanel() {
     bottomRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
     bottomRow.appendChild(rangeInput);
     const searchBtn = btn('검색', doSearch);
+    searchBtn.classList.add('ct-btn-white');
     bottomRow.appendChild(searchBtn);
     body.appendChild(bottomRow);
 
