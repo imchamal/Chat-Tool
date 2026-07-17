@@ -204,7 +204,7 @@ async function runChangeOne(find, replace, options = {}) {
     toastr.success('바꿨습니다.', '', { timeOut: 1500 });
 }
 
-function showChangeResultPanel(find, replaceValue, options) {
+function showChangeResultPanel(find, replaceValue, options, startReviewing = false) {
     const panel = createPanel('ct-change-panel', resultTitleHtml(find, getMarkCount(), options), () => clearHighlights());
     const body = getPanelBody(panel);
     updatePositionLabel(panel);
@@ -222,8 +222,8 @@ function showChangeResultPanel(find, replaceValue, options) {
     const leftGroup = document.createElement('div');
     leftGroup.style.cssText = 'display:flex; gap:6px; align-items:center;';
 
-    let reviewing = false; // false: '모두 바꾸기' 모드, true: '하나씩 검토' 후 '바꾸기'(현재 매치만) 모드
-
+let reviewing = startReviewing; // false: '모두 바꾸기' 모드, true: '하나씩 검토' 후 '바꾸기'(현재 매치만) 모드
+    
     const reviewBtn = btn('하나씩 검토', () => {
         reviewing = true;
         reviewBtn.style.display = 'none';
@@ -245,7 +245,7 @@ function showChangeResultPanel(find, replaceValue, options) {
             // '하나씩 검토' 모드: 지금 보고 있는 매치 하나만 바꾸고, 검색을 새로고침해서 계속 검토할 수 있게 함
             await runChangeOne(find, replaceInput.value, options);
             panel.remove();
-            runChangeSearch(find, replaceInput.value, options);
+            runChangeSearch(find, replaceInput.value, options, true);
         } else {
             // 기본 모드: 전체 매치를 한 번에 바꿈
             clearHighlights();
@@ -256,17 +256,25 @@ function showChangeResultPanel(find, replaceValue, options) {
     allBtn.classList.add('ct-btn-white');
     actionRow.appendChild(allBtn);
 
+    // 검토 중이었다면(=방금 하나 바꾸고 다시 그려진 패널이라면) 처음부터
+    // '이전/다음 + 바꾸기' 상태로 열어서 검토 흐름이 끊기지 않게 함
+    if (startReviewing) {
+        reviewBtn.style.display = 'none';
+        navGroup.style.display = 'flex';
+        allBtn.textContent = '바꾸기';
+    }
+
     body.appendChild(actionRow);
 }
 
-function runChangeSearch(find, replaceValue, options = {}) {
+function runChangeSearch(find, replaceValue, options = {}, startReviewing = false) {
     const settings = getSettings();
     if (!settings.hlEnabled) { toastr.info('편집모드(/edit-mode)에서 하이라이트가 꺼져있습니다.'); return; }
 
     const count = highlightKeyword(find, options);
     if (!count) { toastr.info('검색 결과가 없습니다.'); return; }
 
-    showChangeResultPanel(find, replaceValue, options);
+    showChangeResultPanel(find, replaceValue, options, startReviewing);
 }
 
 function openChangeInputPanel() {
