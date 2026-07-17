@@ -66,7 +66,14 @@ function buildSearchControls() {
     rangeInput.autocorrect = 'off';
     rangeInput.autocapitalize = 'off';
     rangeInput.spellcheck = false;
-rangeInput.style.cssText = 'width:70px; box-sizing:border-box; padding:6px 10px; border-radius:8px; border:1px solid #dddddd; background:#f4f4f4; font-size:13px; font-family:inherit; margin:0;';}
+    rangeInput.style.cssText = 'width:70px; box-sizing:border-box; padding:6px 10px; border-radius:8px; border:1px solid #dddddd; background:#f4f4f4; font-size:13px; font-family:inherit; margin:0;';
+
+    function getOptions() {
+        return { ...state };
+    }
+
+    return { grid, rangeInput, getOptions };
+}
 
 // 검색범위 입력값을 옵션에 반영. 형식이 잘못됐으면 false를 반환(그때는 진행하면 안 됨)
 function applyRangeToOptions(options, rangeInput) {
@@ -91,8 +98,8 @@ function runFind(keyword, options = {}) {
     const panel = createPanel('ct-find-panel', resultTitleHtml(keyword, count, options), () => clearHighlights());
     const body = getPanelBody(panel);
     const row = document.createElement('div');
-    row.appendChild(btn('◂ 이전', () => { focusPrev(); updatePositionLabel(panel); }));
-    row.appendChild(btn('다음 ▸', () => { focusNext(); updatePositionLabel(panel); }));
+    row.appendChild(btn('◀ 이전', () => { focusPrev(); updatePositionLabel(panel); }));
+    row.appendChild(btn('다음 ▶︎', () => { focusNext(); updatePositionLabel(panel); }));
     body.appendChild(row);
 
     updatePositionLabel(panel);
@@ -181,17 +188,24 @@ function showChangeResultPanel(find, replaceValue, options) {
     body.appendChild(replaceInput);
 
     // 이전/다음 화살표는 "하나씩 검토"를 누르기 전까지 숨겨둠
+    // (grid-template-rows 0fr→1fr 트릭: 평소엔 공간을 아예 차지하지 않다가,
+    //  열릴 때는 부드럽게 늘어나면서 아래 버튼을 밀어냄 — 갑자기 튀는 느낌 없음)
+    const navWrap = document.createElement('div');
+    navWrap.style.cssText = 'display:grid; grid-template-rows:0fr; transition:grid-template-rows 0.25s ease;';
+    const navInner = document.createElement('div');
+    navInner.style.overflow = 'hidden';
     const navRow = document.createElement('div');
-    navRow.style.display = 'none';
     navRow.appendChild(btn('◂ 이전', () => { focusPrev(); updatePositionLabel(panel); }));
     navRow.appendChild(btn('다음 ▸', () => { focusNext(); updatePositionLabel(panel); }));
-    body.appendChild(navRow);
+    navInner.appendChild(navRow);
+    navWrap.appendChild(navInner);
+    body.appendChild(navWrap);
 
     const actionRow = document.createElement('div');
     actionRow.className = 'ct-action-row';
 
     const reviewBtn = btn('하나씩 검토', () => {
-        navRow.style.display = '';
+        navWrap.style.gridTemplateRows = '1fr';
         reviewBtn.style.visibility = 'hidden';
         reviewBtn.disabled = true;
     });
