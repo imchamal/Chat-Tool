@@ -31,7 +31,6 @@ export function registerScrollCommands() {
         callback: async () => {
             const marker = document.querySelector('div.stmb_memory_boundary_divider');
             if (!marker) {
-                toastr.info('메모리 경계선을 찾지 못했습니다. (STMemoryBooks 확장 설치 여부와 경계선 존재 여부를 확인해주세요)', '', { timeOut: 5000 });
                 return '';
             }
             marker.scrollIntoView({ block: 'start', behavior: 'smooth' });
