@@ -80,7 +80,22 @@ export function injectThemeCSS() {
             font-size: 14px; cursor: pointer; white-space: nowrap; user-select: none;
         }
     `;
-    document.head.appendChild(s);
+document.head.appendChild(s);
+    watchDrawers();
+}
+
+// 확장/연결/로어북/유저설정 등 상단 서랍(drawer)이 열리면 우리 패널이 그 위에
+// 겹쳐 보이지 않도록 잠깐 숨겨주고, 서랍을 닫으면 다시 보여줌.
+function watchDrawers() {
+    const sync = () => {
+        const drawerOpen = !!document.querySelector('.drawer-content.openDrawer');
+        document.querySelectorAll('.ct-panel').forEach((p) => {
+            p.style.visibility = drawerOpen ? 'hidden' : '';
+        });
+    };
+    new MutationObserver(sync).observe(document.body, {
+        attributes: true, attributeFilter: ['class'], subtree: true,
+    });
 }
 
 // 패널 헤더를 손가락/마우스로 누른 채 움직이면 패널이 따라 움직이게 함
