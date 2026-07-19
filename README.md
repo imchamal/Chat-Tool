@@ -25,21 +25,3 @@ SillyTavern 채팅 편의 기능 확장입니다.
 | `/st word 2-5` | 2번부터 5번 메시지 글자수/단어수 확인 |
 | `/st edit-mode` | 편집모드 설정 패널 열기 |
 | `/st messages` | 전체 메시지 관리 패널 열기 |
-
-기존 명령어도 계속 사용할 수 있습니다.
-
-| 기존 명령어 | `/st` 방식 |
-|---|---|
-| `/search` | `/st search` |
-| `/goto 5` | `/st goto 5` |
-| `/up` | `/st up` |
-| `/down` | `/st down` |
-| `/prev` | `/st prev` |
-| `/next` | `/st next` |
-| `/message-mb` | `/st message-mb` |
-| `/collapse 2-5` | `/st collapse 2-5` |
-| `/expand 2-5` | `/st expand 2-5` |
-| `/clip 2-5` | `/st clip 2-5` |
-| `/word 2-5` | `/st word 2-5` |
-| `/edit-mode` | `/st edit-mode` |
-| `/messages` | `/st messages` |
