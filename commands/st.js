@@ -5,7 +5,6 @@ import {
     scrollUp, scrollDown, scrollToMessage,
     scrollToMemoryBoundary, scrollToAdjacentMessage,
 } from './scroll.js';
-import { collapseMessages, expandMessages } from './collapse.js';
 import { runSearchCommand } from './find-change.js';
 import { copyMessages } from './clipboard.js';
 import { countWords } from './wordcount.js';
@@ -20,8 +19,6 @@ const SUBCOMMANDS = [
     'prev',
     'next',
     'message-mb',
-    'collapse',
-    'expand',
     'clip',
     'word',
     'edit-mode',
@@ -61,12 +58,6 @@ async function runStSubcommand(command, rest) {
             break;
         case 'message-mb':
             await scrollToMemoryBoundary();
-            break;
-        case 'collapse':
-            await collapseMessages(rest);
-            break;
-        case 'expand':
-            await expandMessages(rest);
             break;
         case 'clip':
             await copyMessages(rest);

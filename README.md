@@ -17,8 +17,6 @@ SillyTavern 채팅 편의 기능 확장입니다.
 | `/st prev` | 현재 위치 기준 이전 메시지로 이동 |
 | `/st next` | 현재 위치 기준 다음 메시지로 이동 |
 | `/st message-mb` | STMemoryBooks 메모리 경계선으로 이동 |
-| `/st collapse 2-5` | 2번부터 5번 메시지 접기 |
-| `/st expand 2-5` | 2번부터 5번 메시지 펼치기 |
 | `/st clip` | 전체 메시지 복사 |
 | `/st clip 2-5` | 2번부터 5번 메시지 복사 |
 | `/st word` | 전체 글자수/단어수 확인 |
