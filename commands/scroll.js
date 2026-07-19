@@ -19,12 +19,35 @@ async function loadMoreUntil(predicate, { maxAttempts = 50, delay = 200 } = {}) 
     return predicate();
 }
 
+export async function scrollUp() {
+    document.getElementById('chat')?.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+export async function scrollDown() {
+    const chatEl = document.getElementById('chat');
+    chatEl?.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
+}
+
+export async function scrollToMemoryBoundary() {
+    const marker = document.querySelector('div.stmb_memory_boundary_divider');
+    if (marker) marker.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+
+export async function scrollToMessage(value) {
+    const idx = parseInt(value, 10);
+    if (Number.isNaN(idx)) { toastr.error('사용법: /goto 5 또는 /st goto 5'); return; }
+    await loadMoreUntil(() => !!document.querySelector(`[mesid="${idx}"]`));
+    const el = document.querySelector(`[mesid="${idx}"]`);
+    if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    else toastr.error(`${idx}번 메시지를 화면에서 찾지 못했습니다. (실제로 존재하지 않는 번호일 수 있음)`, '', { timeOut: 5000 });
+}
+
 export function registerScrollCommands() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'up',
         helpString: '채팅 맨 위로 스크롤합니다.',
         callback: async () => {
-            document.getElementById('chat')?.scrollTo({ top: 0, behavior: 'smooth' });
+            await scrollUp();
             return '';
         },
     }));
@@ -33,8 +56,7 @@ export function registerScrollCommands() {
         name: 'down',
         helpString: '채팅 맨 아래로 스크롤합니다.',
         callback: async () => {
-            const chatEl = document.getElementById('chat');
-            chatEl?.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
+            await scrollDown();
             return '';
         },
     }));
@@ -43,11 +65,7 @@ export function registerScrollCommands() {
         name: 'message-mb',
         helpString: 'STMemoryBooks 확장의 메모리 경계선(마지막 요약 지점)으로 스크롤합니다.',
         callback: async () => {
-            const marker = document.querySelector('div.stmb_memory_boundary_divider');
-            if (!marker) {
-                return '';
-            }
-            marker.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            await scrollToMemoryBoundary();
             return '';
         },
     }));
@@ -59,12 +77,7 @@ export function registerScrollCommands() {
             SlashCommandArgument.fromProps({ description: '메시지 번호', typeList: [ARGUMENT_TYPE.NUMBER], isRequired: true }),
         ],
         callback: async (_a, value) => {
-            const idx = parseInt(value, 10);
-            if (Number.isNaN(idx)) { toastr.error('사용법: /goto 5'); return ''; }
-            await loadMoreUntil(() => !!document.querySelector(`[mesid="${idx}"]`));
-            const el = document.querySelector(`[mesid="${idx}"]`);
-            if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
-            else toastr.error(`${idx}번 메시지를 화면에서 찾지 못했습니다. (실제로 존재하지 않는 번호일 수 있음)`, '', { timeOut: 5000 });
+            await scrollToMessage(value);
             return '';
         },
     }));

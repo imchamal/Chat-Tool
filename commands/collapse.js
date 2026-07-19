@@ -9,6 +9,27 @@ import { getChat, editMessage } from '../state.js';
 
 const SUMMARY = '접힌 메시지';
 
+export async function collapseMessages(value) {
+    const idxs = parseRange(value);
+    if (!idxs) { toastr.error('사용법: /collapse 2 또는 /collapse 2-5 또는 /st collapse 2-5'); return; }
+    for (const idx of idxs) {
+        const msg = getChat()[idx];
+        if (!msg || msg.mes.includes(`<summary>${SUMMARY}</summary>`)) continue;
+        await editMessage(idx, `<details>\n<summary>${SUMMARY}</summary>\n\n${msg.mes}\n\n</details>`);
+    }
+}
+
+export async function expandMessages(value) {
+    const idxs = parseRange(value);
+    if (!idxs) { toastr.error('사용법: /expand 2 또는 /expand 2-5 또는 /st expand 2-5'); return; }
+    for (const idx of idxs) {
+        const msg = getChat()[idx];
+        if (!msg) continue;
+        const m = msg.mes.match(/^<details>\n<summary>.*?<\/summary>\n\n([\s\S]*?)\n\n<\/details>$/);
+        if (m) await editMessage(idx, m[1]);
+    }
+}
+
 export function registerCollapseCommands() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'collapse',
@@ -17,13 +38,7 @@ export function registerCollapseCommands() {
             SlashCommandArgument.fromProps({ description: '메시지 번호 또는 범위', typeList: [ARGUMENT_TYPE.STRING], isRequired: true }),
         ],
         callback: async (_a, value) => {
-            const idxs = parseRange(value);
-            if (!idxs) { toastr.error('사용법: /collapse 2 또는 /collapse 2-5'); return ''; }
-            for (const idx of idxs) {
-                const msg = getChat()[idx];
-                if (!msg || msg.mes.includes(`<summary>${SUMMARY}</summary>`)) continue;
-                await editMessage(idx, `<details>\n<summary>${SUMMARY}</summary>\n\n${msg.mes}\n\n</details>`);
-            }
+            await collapseMessages(value);
             return '';
         },
     }));
@@ -35,14 +50,7 @@ export function registerCollapseCommands() {
             SlashCommandArgument.fromProps({ description: '메시지 번호 또는 범위', typeList: [ARGUMENT_TYPE.STRING], isRequired: true }),
         ],
         callback: async (_a, value) => {
-            const idxs = parseRange(value);
-            if (!idxs) { toastr.error('사용법: /expand 2 또는 /expand 2-5'); return ''; }
-            for (const idx of idxs) {
-                const msg = getChat()[idx];
-                if (!msg) continue;
-                const m = msg.mes.match(/^<details>\n<summary>.*?<\/summary>\n\n([\s\S]*?)\n\n<\/details>$/);
-                if (m) await editMessage(idx, m[1]);
-            }
+            await expandMessages(value);
             return '';
         },
     }));

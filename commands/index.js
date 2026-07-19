@@ -16,7 +16,7 @@ import { registerScissorButton } from './scissor-button.js';
 import { registerStCommand } from './st.js';
 
 const registrars = [
-    registerStCommand,             // /st search, /st goto 5 처럼 SlashTavern 명령어 실행
+    registerStCommand,             // /st search, /st goto 5 처럼 SlashTavern 명령어 모음
     registerScrollCommands,        // /up /down /goto /message-mb
     registerCollapseCommands,      // /collapse /expand
     registerFindChangeCommands,    // /find /change (옵션: 대소문자/띄어쓰기/온전한단어/태그무시)

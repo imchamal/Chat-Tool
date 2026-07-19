@@ -276,6 +276,19 @@ function runChangeSearch(find, replaceValue, options = {}) {
     showChangeResultPanel(find, replaceValue, options);
 }
 
+export async function runSearchCommand(value) {
+    const raw = String(value ?? '');
+    if (!raw.trim()) { openSearchInputPanel(); return; }
+    const slashIdx = raw.indexOf('/');
+    if (slashIdx === -1) {
+        runFind(raw.trim());
+    } else {
+        const find = raw.slice(0, slashIdx);
+        const replace = raw.slice(slashIdx + 1);
+        runChangeSearch(find, replace);
+    }
+}
+
 // ── 명령어 등록 ────────────────────────────────────────────────────────────────
 // /find, /change를 /search 하나로 통합.
 // 슬래시(/)가 없는 인자는 찾기, 슬래시가 있으면 "원본/바꿀텍스트"로 보고 찾아바꾸기.
@@ -288,16 +301,7 @@ export function registerFindChangeCommands() {
             SlashCommandArgument.fromProps({ description: '키워드, 또는 원본/바꿀텍스트 (생략시 입력 패널)', typeList: [ARGUMENT_TYPE.STRING], isRequired: false }),
         ],
         callback: async (_a, value) => {
-            const raw = String(value ?? '');
-            if (!raw.trim()) { openSearchInputPanel(); return ''; }
-            const slashIdx = raw.indexOf('/');
-            if (slashIdx === -1) {
-                runFind(raw.trim());
-            } else {
-                const find = raw.slice(0, slashIdx);
-                const replace = raw.slice(slashIdx + 1);
-                runChangeSearch(find, replace);
-            }
+            await runSearchCommand(value);
             return '';
         },
     }));

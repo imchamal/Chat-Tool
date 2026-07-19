@@ -56,7 +56,7 @@ async function runDelete(idxs) {
     return true;
 }
 
-function openMessagePanel() {
+export function openMessagePanel() {
     const chat = getChat();
     if (!chat.length) { toastr.info('채팅에 메시지가 없습니다.'); return; }
 
