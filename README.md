@@ -23,3 +23,4 @@ SillyTavern 채팅 편의 기능 확장입니다.
 | `/st word 2-5` | 2번부터 5번 메시지 글자수/단어수 확인 |
 | `/st settings` | 설정 패널 열기 |
 | `/st messages` | 전체 메시지 관리 패널 열기 |
+| `/st swipes` | 스와이프 메시지 관리 패널 열기 |

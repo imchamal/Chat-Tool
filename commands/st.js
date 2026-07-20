@@ -10,6 +10,7 @@ import { copyText } from './clipboard.js';
 import { countWords } from './wordcount.js';
 import { openSettingsPanel } from './edit-mode.js';
 import { openMessagePanel } from './message-manage.js';
+import { openSwipesPanel } from './swipes.js';
 
 const SUBCOMMANDS = [
     'search',
@@ -23,6 +24,7 @@ const SUBCOMMANDS = [
     'word',
     'settings',
     'messages',
+    'swipes',
 ];
 
 function splitSubcommand(value) {
@@ -70,6 +72,9 @@ async function runStSubcommand(command, rest) {
             break;
         case 'messages':
             openMessagePanel();
+            break;
+        case 'swipes':
+            openSwipesPanel();
             break;
         default:
             toastr.error(`알 수 없는 SlashTavern 명령어입니다: ${command}`, '', { timeOut: 4000 });
