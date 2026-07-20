@@ -89,8 +89,7 @@ function createBareIconButton(icon, title, onClick) {
     button.type = 'button';
     button.innerHTML = icon;
     button.title = title;
-    button.style.cssText = 'background:transparent; border:none; padding:0 2px; margin:0; cursor:pointer; font-size:15px; line-height:1;';
-    button.addEventListener('click', onClick);
+    button.style.cssText = 'background:transparent; border:none; padding:0 2px; margin:0; cursor:pointer; font-size:12px; line-height:1; color:#999; display:inline-flex; align-items:center; justify-content:center; transform:translateY(-1px);';    button.addEventListener('click', onClick);
     return button;
 }
 
