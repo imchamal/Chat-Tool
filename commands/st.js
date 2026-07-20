@@ -8,7 +8,7 @@ import {
 import { runSearchCommand } from './find-change.js';
 import { copyMessages } from './clipboard.js';
 import { countWords } from './wordcount.js';
-import { openEditModePanel } from './edit-mode.js';
+import { openSettingsPanel } from './edit-mode.js';
 import { openMessagePanel } from './message-manage.js';
 
 const SUBCOMMANDS = [
