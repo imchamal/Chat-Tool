@@ -11,6 +11,7 @@ import { countWords } from './wordcount.js';
 import { openSettingsPanel } from './edit-mode.js';
 import { openMessagePanel } from './message-manage.js';
 import { openSwipesPanel } from './swipes.js';
+import { openUnifiedMessagesPanel } from './unified-panel.js';
 
 const SUBCOMMANDS = [
     'search',
@@ -24,6 +25,7 @@ const SUBCOMMANDS = [
     'word',
     'settings',
     'messages',
+    'edit',
     'swipes',
 ];
 
@@ -71,6 +73,9 @@ async function runStSubcommand(command, rest) {
             openSettingsPanel();
             break;
         case 'messages':
+            openUnifiedMessagesPanel();
+            break;
+        case 'edit':
             openMessagePanel();
             break;
         case 'swipes':
@@ -84,7 +89,7 @@ async function runStSubcommand(command, rest) {
 export function registerStCommand() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'st',
-        helpString: 'SlashTavern 명령어 모음입니다. 사용법: /st search, /st goto 5, /st messages',
+        helpString: 'SlashTavern 명령어 모음입니다. 사용법: /st messages, /st search, /st swipes, /st edit',
         unnamedArgumentList: [
             SlashCommandArgument.fromProps({
                 description: 'SlashTavern 명령어',

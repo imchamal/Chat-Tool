@@ -152,7 +152,7 @@ export function runFind(keyword, options = {}) {
 // /find, /change 입력창을 대체하는 검색 입력 패널.
 // 항상 "찾기"만 실행하고, 찾아바꾸기로 전환하는 "바꾸기" 버튼은
 // 검색 후에 뜨는 결과 패널(runFind) 쪽에 있음.
-function openSearchInputPanel() {
+export function openSearchInputPanel() {
     const panel = createPanel('ct-search-panel', '검색');
     const body = getPanelBody(panel);
     const input = inputBox('찾을 단어를 입력하세요');
