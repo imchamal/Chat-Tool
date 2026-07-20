@@ -47,13 +47,13 @@ function createBareIconButton(icon, title, onClick) {
     return button;
 }
 
-function setPanelTitleWithBackButton(panel, titleHtml, onBack) {
+function setPanelTitleWithBackButton(panel, titleHtml, title, onBack) {
     const titleEl = panel.querySelector('.ct-panel-header > span');
     if (!titleEl) return;
     titleEl.textContent = '';
     titleEl.style.cssText = 'display:flex; align-items:center; gap:6px;';
 
-    const backBtn = createBareIconButton('<i class="fa-solid fa-arrow-left"></i>', '검색 결과로 돌아가기', onBack);
+    const backBtn = createBareIconButton('<i class="fa-solid fa-arrow-left"></i>', title, onBack);
     titleEl.appendChild(backBtn);
 
     const title = document.createElement('span');
@@ -121,6 +121,11 @@ export function runFind(keyword, options = {}) {
 
     const panel = createPanel('ct-find-panel', resultTitleHtml(keyword, count, options), () => clearHighlights());
     const body = getPanelBody(panel);
+    setPanelTitleWithBackButton(panel, resultTitleHtml(keyword, count, options), '검색 입력으로 돌아가기', () => {
+        clearHighlights();
+        panel.remove();
+        openSearchInputPanel();
+    });
     const row = document.createElement('div');
     row.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
 
@@ -249,9 +254,10 @@ async function runChangeOne(find, replace, options = {}) {
 function showChangeResultPanel(find, replaceValue, options) {
     const panel = createPanel('ct-change-panel', resultTitleHtml(find, getMarkCount(), options), () => clearHighlights());
     const body = getPanelBody(panel);
-    setPanelTitleWithBackButton(panel, resultTitleHtml(find, getMarkCount(), options), () => {
+    setPanelTitleWithBackButton(panel, resultTitleHtml(find, getMarkCount(), options), '검색 입력으로 돌아가기', () => {
+        clearHighlights();
         panel.remove();
-        runFind(find, options);
+        openSearchInputPanel();
     });
     updatePositionLabel(panel);
 
