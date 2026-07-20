@@ -33,5 +33,4 @@ export async function copyText(value = '') {
     }
 
     await writeClipboard(text);
-    toastr.success('복사했습니다.', '', { timeOut: 1500 });
 }
