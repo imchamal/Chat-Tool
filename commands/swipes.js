@@ -20,7 +20,20 @@ function getCurrentSwipeIndex(msg) {
 
 function setPanelTitle(panel, title) {
     const titleEl = panel.querySelector('.ct-panel-header > span');
-    if (titleEl) titleEl.textContent = title;
+    if (!titleEl) return;
+    titleEl.style.cssText = '';
+    titleEl.textContent = title;
+}
+
+function setPanelTitleWithListButton(panel, title, onList) {
+    const titleEl = panel.querySelector('.ct-panel-header > span');
+    if (!titleEl) return;
+    titleEl.textContent = '';
+    titleEl.style.cssText = 'display:flex; align-items:center; gap:6px;';
+
+    const listBtn = createBareIconButton('↩', '목록으로 돌아가기', onList);
+    titleEl.appendChild(listBtn);
+    titleEl.appendChild(document.createTextNode(title));
 }
 
 function renderMessage(msgIdx) {
@@ -71,13 +84,12 @@ function keepOnlySwipe(msgIdx, swipeIdx) {
     return true;
 }
 
-function createIconButton(icon, title, onClick) {
+function createBareIconButton(icon, title, onClick) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'ct-btn';
     button.textContent = icon;
     button.title = title;
-    button.style.cssText = 'width:28px; height:28px; padding:0; margin:0; display:inline-flex; align-items:center; justify-content:center;';
+    button.style.cssText = 'background:transparent; border:none; padding:0 2px; margin:0; cursor:pointer; font-size:15px; line-height:1;';
     button.addEventListener('click', onClick);
     return button;
 }
@@ -102,33 +114,20 @@ function createSwipeRow({ msgIdx, swipeIdx, text, isCurrent, isSelected, onSelec
     preview.textContent = previewText(text, 90);
     header.appendChild(preview);
 
-    if (isCurrent) {
-        const badge = document.createElement('span');
-        badge.className = 'ct-badge';
-        badge.textContent = '현재';
-        header.appendChild(badge);
-    } else if (isSelected) {
-        const badge = document.createElement('span');
-        badge.className = 'ct-badge';
-        badge.textContent = '선택';
-        header.appendChild(badge);
-    }
-
-    const toggleBtn = createIconButton('▸', '내용 펼치기/접기', (e) => {
+    const toggleBtn = createBareIconButton('▾', '내용 펼치기/접기', (e) => {
         e.stopPropagation();
         const open = content.style.display === 'none';
         content.style.display = open ? 'block' : 'none';
-        toggleBtn.textContent = open ? '▾' : '▸';
+        toggleBtn.textContent = open ? '▴' : '▾';
     });
     header.appendChild(toggleBtn);
 
-    const deleteBtn = createIconButton('🗑', '스와이프 삭제', (e) => {
+    const deleteBtn = createBareIconButton('🗑️', '스와이프 삭제', (e) => {
         e.stopPropagation();
         const confirmed = confirm(`${swipeIdx + 1}번 스와이프를 삭제할까요?`);
         if (!confirmed) return;
         onDelete();
     });
-    deleteBtn.classList.add('ct-btn-danger');
     header.appendChild(deleteBtn);
 
     row.appendChild(header);
@@ -179,11 +178,10 @@ function renderSwipeList(panel) {
         badge.textContent = `${msg.swipes.length}개`;
         item.appendChild(badge);
 
-        const detailBtn = btn('보기', (e) => {
+        const detailBtn = createBareIconButton('👁️', '스와이프 보기', (e) => {
             e.stopPropagation();
             renderSwipeDetail(panel, idx);
         });
-        detailBtn.style.margin = '0';
         item.appendChild(detailBtn);
 
         body.appendChild(item);
@@ -199,7 +197,7 @@ function renderSwipeDetail(panel, msgIdx) {
 
     const body = getPanelBody(panel);
     body.innerHTML = '';
-    setPanelTitle(panel, `#${msgIdx} 스와이프 (${msg.swipes.length})`);
+    setPanelTitleWithListButton(panel, `#${msgIdx} 스와이프 (${msg.swipes.length})`, () => renderSwipeList(panel));
 
     renderSwipeDetailWithSelection(panel, msgIdx, getCurrentSwipeIndex(msg));
 }
@@ -213,15 +211,39 @@ function renderSwipeDetailWithSelection(panel, msgIdx, selectedSwipeIdx) {
 
     const body = getPanelBody(panel);
     body.innerHTML = '';
-    setPanelTitle(panel, `#${msgIdx} 스와이프 (${msg.swipes.length})`);
+    setPanelTitleWithListButton(panel, `#${msgIdx} 스와이프 (${msg.swipes.length})`, () => renderSwipeList(panel));
 
     const current = getCurrentSwipeIndex(msg);
     let selected = Math.min(Math.max(selectedSwipeIdx, 0), msg.swipes.length - 1);
 
-    const topRow = document.createElement('div');
-    topRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px;';
+    const list = document.createElement('div');
+    body.appendChild(list);
 
-    topRow.appendChild(btn('목록', () => renderSwipeList(panel)));
+    msg.swipes.forEach((swipe, swipeIdx) => {
+        list.appendChild(createSwipeRow({
+            msgIdx,
+            swipeIdx,
+            text: swipe,
+            isCurrent: swipeIdx === current,
+            isSelected: swipeIdx === selected,
+            onSelect: () => renderSwipeDetailWithSelection(panel, msgIdx, swipeIdx),
+            onDelete: () => {
+                if (deleteSwipe(msgIdx, swipeIdx)) {
+                    toastr.success('삭제했습니다.', '', { timeOut: 1500 });
+                    renderSwipeDetailWithSelection(panel, msgIdx, Math.min(selected, getChat()[msgIdx]?.swipes?.length - 1 ?? 0));
+                }
+            },
+        }));
+    });
+
+    const actionRow = document.createElement('div');
+    actionRow.className = 'ct-action-row';
+    actionRow.style.cssText += ' margin-top:8px; gap:8px;';
+
+    const undoBtn = createBareIconButton('↶', '현재 스와이프로 선택 되돌리기', () => {
+        renderSwipeDetailWithSelection(panel, msgIdx, current);
+    });
+    actionRow.appendChild(undoBtn);
 
     const rightGroup = document.createElement('div');
     rightGroup.style.cssText = 'display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;';
@@ -244,25 +266,8 @@ function renderSwipeDetailWithSelection(panel, msgIdx, selectedSwipeIdx) {
     });
     keepCurrentBtn.classList.add('ct-btn-danger');
     rightGroup.appendChild(keepCurrentBtn);
-    topRow.appendChild(rightGroup);
-    body.appendChild(topRow);
-
-    msg.swipes.forEach((swipe, swipeIdx) => {
-        body.appendChild(createSwipeRow({
-            msgIdx,
-            swipeIdx,
-            text: swipe,
-            isCurrent: swipeIdx === current,
-            isSelected: swipeIdx === selected,
-            onSelect: () => renderSwipeDetailWithSelection(panel, msgIdx, swipeIdx),
-            onDelete: () => {
-                if (deleteSwipe(msgIdx, swipeIdx)) {
-                    toastr.success('삭제했습니다.', '', { timeOut: 1500 });
-                    renderSwipeDetailWithSelection(panel, msgIdx, Math.min(selected, getChat()[msgIdx]?.swipes?.length - 1 ?? 0));
-                }
-            },
-        }));
-    });
+    actionRow.appendChild(rightGroup);
+    body.appendChild(actionRow);
 }
 
 export function openSwipesPanel() {
